@@ -66,7 +66,7 @@
         .ping-green { color: #00ff00; font-weight: bold; }
         .ping-yellow { color: #ffff00; font-weight: bold; }
         .ping-red { color: #ff0000; font-weight: bold; }
-        #main-content, #subscription-form, #vip-panel, #vip-code-form, #dns-form { display: none; }
+        #main-content, #subscription-form, #vip-panel, #vip-code-form, #dns-form, #register-form { display: none; }
         #login-form { display: block; }
         input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
@@ -77,7 +77,7 @@
             box-sizing: border-box;
         }
         p.error { color: red; margin-top: 10px; display: none; }
-        #login-form, #main-content, #subscription-form, #vip-panel, #vip-code-form, #dns-form {
+        #login-form, #main-content, #subscription-form, #vip-panel, #vip-code-form, #dns-form, #register-form {
             color: white;
         }
         #login-form h2, #login-form p, #login-form button,
@@ -86,13 +86,27 @@
         #vip-panel h2, #vip-panel p, #vip-panel button,
         #vip-code-form h2, #vip-code-form p, #vip-code-form button,
         #dns-form h2, #dns-form p, #dns-form button,
+        #register-form h2, #register-form p, #register-form button,
         #login-form input::placeholder, #subscription-form input::placeholder,
-        #vip-code-form input::placeholder, #dns-form input::placeholder {
+        #vip-code-form input::placeholder, #dns-form input::placeholder,
+        #register-form input::placeholder {
             color: white;
         }
-        #login-form input, #subscription-form input, #vip-panel input, #vip-code-form input, #dns-form input {
+        #login-form input, #subscription-form input, #vip-panel input, #vip-code-form input, #dns-form input, #register-form input {
             color: white;
             background: rgba(255, 255, 255, 0.1);
+        }
+        .switch-form {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .switch-form a {
+            color: #00bcd4;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .switch-form a:hover {
+            color: #0097a7;
         }
         @media only screen and (max-width: 768px) {
             body { padding: 20px; background-size: cover; }
@@ -112,6 +126,22 @@
         <input type="password" id="password" placeholder="رمز عبور">
         <button onclick="login()">🗿ورود</button>
         <p id="login-error" class="error">🚧نام کاربری یا رمز عبور اشتباه است.</p>
+        <div class="switch-form">
+            <p>حساب کاربری ندارید؟ <a onclick="showRegisterForm()">ثبت نام کنید</a></p>
+        </div>
+    </div>
+
+    <!-- فرم ثبت نام -->
+    <div id="register-form" class="container">
+        <h2>📝 ثبت نام</h2>
+        <input type="text" id="register-username" placeholder="نام کاربری">
+        <input type="password" id="register-password" placeholder="رمز عبور">
+        <input type="password" id="confirm-password" placeholder="تکرار رمز عبور">
+        <button onclick="register()">✅ ثبت نام</button>
+        <p id="register-error" class="error">🚫 خطا در ثبت نام.</p>
+        <div class="switch-form">
+            <p>حساب کاربری دارید؟ <a onclick="showLoginForm()">وارد شوید</a></p>
+        </div>
     </div>
 
     <!-- فرم بررسی اشتراک طلایی -->
@@ -356,13 +386,81 @@
             }
         }
 
+        // نمایش فرم ثبت نام
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('register-error').style.display = 'none';
+            document.getElementById('register-username').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+
+        // نمایش فرم ورود
+        function showLoginForm() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('login-error').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // تابع ثبت نام
+        function register() {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+            const confirmPassword = document.getElementById('confirm-password').value.trim();
+            const registerError = document.getElementById('register-error');
+
+            // اعتبارسنجی ورودی‌ها
+            if (!username || !password || !confirmPassword) {
+                registerError.textContent = "🚫 لطفاً تمام فیلدها را پر کنید.";
+                registerError.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                registerError.textContent = "🚫 رمز عبور و تکرار آن مطابقت ندارند.";
+                registerError.style.display = 'block';
+                return;
+            }
+
+            if (username.length < 4 || password.length < 6) {
+                registerError.textContent = "🚫 نام کاربری حداقل 4 و رمز عبور حداقل 6 کاراکتر باشد.";
+                registerError.style.display = 'block';
+                return;
+            }
+
+            // بارگذاری کاربران از localStorage
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+            // بررسی وجود نام کاربری
+            if (users.some(user => user.username === username)) {
+                registerError.textContent = "🚫 این نام کاربری قبلاً ثبت شده است.";
+                registerError.style.display = 'block';
+                return;
+            }
+
+            // افزودن کاربر جدید
+            users.push({ username, password });
+            localStorage.setItem('users', JSON.stringify(users));
+
+            alert("✅ ثبت نام با موفقیت انجام شد! حالا می‌توانید وارد شوید.");
+            showLoginForm();
+        }
+
         // تابع ورود
         function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             const loginError = document.getElementById('login-error');
 
-            if (username === defaultUsername && password === defaultPassword) {
+            // بارگذاری کاربران از localStorage
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+            // بررسی ورود با نام کاربری و رمز عبور پیش‌فرض یا کاربران ثبت‌شده
+            const validUser = users.find(user => user.username === username && user.password === password);
+            if ((username === defaultUsername && password === defaultPassword) || validUser) {
                 document.getElementById('login-form').style.display = 'none';
                 loginError.style.display = 'none';
                 if (isGoldenSubscriptionValid()) {
